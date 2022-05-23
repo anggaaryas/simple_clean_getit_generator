@@ -1,0 +1,20 @@
+targets:
+  $default:
+    builders:
+      simple_clean_getit_generator:
+        enabled: true
+        generate_for:
+          exclude:
+            - test
+            - example
+          include:
+            - test/integration/*
+
+builders:
+  simple_clean_getit_generator:
+    import: "package:simple_clean_getit_generator/simple_clean_getit_generator.dart"
+    builder_factories: ["simpleCleanGetitGenerator"]
+    build_extensions: { ".dart": [".inject.dart"] }
+    auto_apply: dependents
+    build_to: source
+    runs_before: ["injectable_generator|injectable_builder"]
