@@ -1,4 +1,3 @@
-import 'package:simple_clean_getit_generator/simple_clean_getit_generator.dart';
 
 class GeneratorAnnotation{
   const GeneratorAnnotation();
