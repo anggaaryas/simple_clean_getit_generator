@@ -1,7 +1,6 @@
 import 'package:build/build.dart';
 import 'package:simple_clean_getit_generator/simple_clean_getit_generator.dart';
 import 'package:simple_clean_getit_generator/src/generator.dart';
-import 'package:simple_clean_getit_generator/src/simple_clean_getit_generator.dart';
 import 'package:source_gen/source_gen.dart';
 
 /*

@@ -3,26 +3,10 @@ import 'dart:async';
 import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 import 'package:simple_clean_getit_generator/simple_clean_getit_generator.dart';
+import 'package:simple_clean_getit_generator/src/class_generator.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:path/path.dart' as p;
 import 'package:analyzer/dart/element/element.dart';
-
-abstract class GeneratorAllInOneForAnnotation<T> extends Generator{
-  const GeneratorAllInOneForAnnotation();
-
-  TypeChecker get typeChecker => TypeChecker.fromRuntime(T);
-
-  @override
-  FutureOr<String> generate(LibraryReader library, BuildStep buildStep) {
-    final values = <String>{};
-    final listElement = library.annotatedWith(typeChecker);
-    final generatedValue = generateFile(listElement);
-    values.add(generatedValue);
-    return values.join('\n\n');
-  }
-
-  String generateFile(Iterable<AnnotatedElement> element);
-}
 
 class ListAllServiceLocatorBuilder extends Builder{
 
@@ -37,21 +21,34 @@ class ListAllServiceLocatorBuilder extends Builder{
 
   @override
   Future<void> build(BuildStep buildStep) async {
-    final classNames = <String>[];
+    final List<ServiceLocator> serviceLocators = [];
     await for (final input in buildStep.findAssets(Glob('lib/**'))){
       final library = await buildStep.resolver.libraryFor(input);
       final classesInLibrary = LibraryReader(library).annotatedWith(typeChecker);
 
-      classNames.addAll(classesInLibrary.map((c){
+      serviceLocators.addAll(classesInLibrary.map((c){
         var name = (c.element as ClassElement).name;
-        var type = (c.annotation.objectValue);
+        var layer = c.annotation.objectValue.getField('layer')!.toIntValue();
+        var as = c.annotation.objectValue.getField('services')!.toListValue()!;
+        var tag = c.annotation.objectValue.getField('tag')?.toStringValue();
         var path = (c.element as ClassElement).location!.components.first;
 
-        return '$name  |  $type  |  $path\n';
+        var serviceList = <Service>[];
+        for(var item in as){
+          serviceList.add(
+              Service(item.toTypeValue()!.element!.source!.uri.toString(),
+              item.toTypeValue()!.getDisplayString(withNullability: false))
+          );
+        }
+
+        return ServiceLocator(name, serviceList, path, layer!, tag);
       }));
     }
+
+    var generateClass = ClassGenerator(serviceLocators).generate();
+
     await buildStep.writeAsString(
-        _allFileOutput(buildStep), classNames.join('\n'));
+        _allFileOutput(buildStep), generateClass);
   }
 
   @override
